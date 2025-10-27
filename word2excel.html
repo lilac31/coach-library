@@ -9,8 +9,16 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.0/dist/xlsx.full.min.js"></script>
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-900">
-  <div class="max-w-3xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-4">教练对话录音 word 转 excel 工具</h1>
+  <div class="max-w-6xl mx-auto p-6">
+    <div class="flex justify-between items-start mb-4">
+      <div>
+        <h1 class="text-2xl font-bold mb-1">教练对话录音 word 转 excel 工具</h1>
+        <div class="text-sm text-gray-600">开发者：Everleaf（vx：sy15150683131） | 更新时间：2025/10/28 v1.0.1</div>
+      </div>
+      <button id="updateBtn" class="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+        更新说明
+      </button>
+    </div>
 
     <div class="bg-white rounded-2xl shadow p-5 space-y-4">
       <!-- 上传 & 姓名 -->
@@ -37,6 +45,45 @@
         <label for="keepUnknown" class="text-sm text-gray-700">保留未匹配姓名为原说话人（未勾选则忽略未匹配行）</label>
       </div>
 
+      <!-- 教练内容颜色设置 -->
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-3 text-gray-700">请选择将教练提问的内容高亮为以下颜色，默认加粗</label>
+          <div class="flex flex-wrap gap-3">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="coachStyle" value="bold" class="sr-only peer" checked />
+              <span class="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl transition-all duration-200 peer-checked:border-gray-400 peer-checked:bg-white peer-checked:shadow-sm group-hover:border-gray-300">
+                <span class="font-bold">加粗</span>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="coachStyle" value="blue" class="sr-only peer" />
+              <span class="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl transition-all duration-200 peer-checked:border-blue-300 peer-checked:bg-blue-50 peer-checked:shadow-sm group-hover:border-blue-200" style="color: #2563eb;">
+                <span class="font-bold">蓝色</span>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="coachStyle" value="red" class="sr-only peer" />
+              <span class="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl transition-all duration-200 peer-checked:border-red-300 peer-checked:bg-red-50 peer-checked:shadow-sm group-hover:border-red-200" style="color: #dc2626;">
+                <span class="font-bold">深红色</span>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="coachStyle" value="brown" class="sr-only peer" />
+              <span class="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl transition-all duration-200 peer-checked:border-amber-300 peer-checked:bg-amber-50 peer-checked:shadow-sm group-hover:border-amber-200" style="color: #92400e;">
+                <span class="font-bold">棕色</span>
+              </span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="radio" name="coachStyle" value="green" class="sr-only peer" />
+              <span class="px-4 py-2 text-sm font-medium border border-gray-200 rounded-xl transition-all duration-200 peer-checked:border-green-300 peer-checked:bg-green-50 peer-checked:shadow-sm group-hover:border-green-200" style="color: #059669;">
+                <span class="font-bold">绿色</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮 -->
       <div class="flex flex-wrap items-center gap-3">
         <button id="convertBtn" class="rounded-xl bg-indigo-600 px-4 py-2 text-white font-medium hover:bg-indigo-700">开始转换</button>
@@ -50,6 +97,59 @@
       <div id="copyWrap" class="hidden">
         <label class="block text-sm font-medium mb-1">已生成的可粘贴内容（TSV）<span class="text-gray-400">（粘贴到 Excel 会自动分列）</span></label>
         <textarea id="copyText" class="w-full h-32 rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-xs p-3" readonly></textarea>
+      </div>
+
+      <!-- 样式预览区域 -->
+      <div id="previewWrap" class="hidden mt-6">
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-sm font-medium">对话预览（带样式区分）</label>
+          <button id="fullscreenBtn" class="px-3 py-1 text-xs text-gray-500 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors hidden">
+            全屏预览
+          </button>
+        </div>
+        <div id="previewContent" class="bg-gray-50 rounded-xl p-4 border border-gray-200 max-h-64 overflow-y-auto">
+          <p class="text-gray-500 text-sm">转换后将显示带样式的对话预览</p>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">教练内容显示为蓝色加粗，被教练内容显示为绿色</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全屏预览模态框 -->
+  <div id="fullscreenModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="absolute inset-0 bg-white m-4 rounded-xl shadow-2xl">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="text-lg font-semibold">对话预览 - 全屏模式</h3>
+        <button id="closeFullscreen" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+      </div>
+      <div id="fullscreenContent" class="p-6 h-full overflow-y-auto">
+        <p class="text-gray-500">转换后将显示全屏预览</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 更新说明模态框 -->
+  <div id="updateModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-96 overflow-hidden">
+      <div class="flex justify-between items-center p-6 border-b">
+        <h3 class="text-lg font-semibold">更新说明</h3>
+        <button id="closeUpdate" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+      </div>
+      <div class="p-6 overflow-y-auto max-h-64">
+        <div class="space-y-4">
+          <div>
+            <h4 class="font-semibold text-green-600">v1.0.1 版本更新日志</h4>
+            <ul class="text-sm text-gray-600 mt-2 space-y-1">
+              <li>• 修改了名称中包含（）的bug</li>
+              <li>• 支持了网站版本，后续更新无需替换文件就可以使用啦，请保存好这个网址</li>
+              <li>• 增加了针对教练提问可设置不同颜色，便于识别提问内容的功能</li>
+            </ul>
+          </div>
+          <div class="text-xs text-gray-500 border-t pt-3">
+            <p>开发者：Everleaf（vx：sy15150683131）</p>
+            <p class="mt-1">如有问题或建议，欢迎联系反馈</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -80,7 +180,54 @@
       const sanitize = (s) => String(s).replace(/\r?\n/g,' ').replace(/\t/g,' ');
       const header = ['时间','角色','内容'];
       const all = [header, ...rows];
-      return all.map(r => r.map(sanitize).join('\t')).join('\n');
+      
+      // 生成带Excel格式的TSV（教练内容加粗）
+      let tsvContent = '';
+      
+      // 添加标题行
+      tsvContent += header.map(sanitize).join('\t') + '\n';
+      
+      // 添加数据行，为教练内容添加加粗标记
+      rows.forEach(row => {
+        const [time, role, content] = row;
+        let formattedContent = content;
+        
+        // 如果是教练内容，添加Excel可识别的加粗标记
+        if (role === '教练') {
+          // 使用HTML格式，Excel粘贴时会识别加粗
+          formattedContent = `<b>${content}</b>`;
+        }
+        
+        tsvContent += [sanitize(time), sanitize(role), sanitize(formattedContent)].join('\t') + '\n';
+      });
+      
+      return tsvContent;
+    }
+
+    // 生成带样式的HTML预览
+    function rowsToStyledHTML(rows){
+      let html = '<div style="font-family: Arial, sans-serif; line-height: 1.6;">';
+      
+      rows.forEach(row => {
+        const [time, role, content] = row;
+        let style = '';
+        
+        if (role === '教练') {
+          style = 'font-weight: bold; color: #2563eb; background-color: #eff6ff; padding: 8px; border-left: 4px solid #2563eb; margin: 5px 0;';
+        } else if (role === '被教练') {
+          style = 'font-weight: 600; color: #059669; background-color: #f0fdf4; padding: 8px; border-left: 4px solid #059669; margin: 5px 0;';
+        } else {
+          style = 'color: #6b7280; background-color: #f9fafb; padding: 8px; border-left: 4px solid #9ca3af; margin: 5px 0;';
+        }
+        
+        html += `<div style="${style}">`;
+        html += `<strong>${time}</strong> | <strong>${role}</strong><br>`;
+        html += content;
+        html += '</div>';
+      });
+      
+      html += '</div>';
+      return html;
     }
 
     function rowsToCSV(rows){
@@ -203,6 +350,11 @@
         $("copyBtn").disabled = false;
         $("csvBtn").disabled = false;
 
+        // 显示样式预览
+        $("previewContent").innerHTML = rowsToStyledHTML(rows);
+        $("previewWrap").classList.remove('hidden');
+        $("fullscreenBtn").classList.remove('hidden');
+
         // Excel 库检查（不阻断主流程）
         const ok = await ensureXLSX();
         $("xlsxBtn").disabled = !ok;
@@ -216,22 +368,120 @@
       }
     });
 
+    // 获取教练内容样式
+    function getCoachStyle() {
+      const selectedStyle = document.querySelector('input[name="coachStyle"]:checked').value;
+      const styles = {
+        'bold': { rowStyle: 'font-weight: bold;', contentStyle: '' },
+        'blue': { rowStyle: 'font-weight: bold; color: #2563eb;', contentStyle: 'color: #2563eb;' },
+        'red': { rowStyle: 'font-weight: bold; color: #dc2626;', contentStyle: 'color: #dc2626;' },
+        'brown': { rowStyle: 'font-weight: bold; color: #92400e;', contentStyle: 'color: #92400e;' },
+        'green': { rowStyle: 'font-weight: bold; color: #059669;', contentStyle: 'color: #059669;' }
+      };
+      return styles[selectedStyle] || styles['bold'];
+    }
+
     // —— 事件：复制 TSV ——
     $("copyBtn").addEventListener('click', ()=>{
       if (!lastRows.length) return;
+      
+      // 获取用户选择的教练样式
+      const coachStyle = getCoachStyle();
+      
+      // 生成带格式的HTML内容，用于Excel粘贴
+      let htmlContent = '<table border="1">';
+      htmlContent += '<tr><th>时间</th><th>角色</th><th>内容</th></tr>';
+      
+      lastRows.forEach(row => {
+        const [time, role, content] = row;
+        
+        // 为教练整行添加用户选择的样式
+        if (role === '教练') {
+          htmlContent += `<tr style="${coachStyle.rowStyle}">`;
+          htmlContent += `<td>${time}</td>`;
+          htmlContent += `<td>${role}</td>`;
+          htmlContent += `<td><b>${content}</b></td>`;
+        } else {
+          htmlContent += '<tr>';
+          htmlContent += `<td>${time}</td>`;
+          htmlContent += `<td>${role}</td>`;
+          htmlContent += `<td>${content}</td>`;
+        }
+        
+        htmlContent += '</tr>';
+      });
+      
+      htmlContent += '</table>';
+      
+      // 同时生成TSV格式用于兼容性
       const tsv = rowsToTSV(lastRows);
       const ta = $("copyText");
       ta.value = tsv;
-      if (navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(tsv).then(()=>{
-          $("status").textContent = '已复制到剪贴板（可直接在 Excel 粘贴）';
+      
+      // 尝试复制HTML格式到剪贴板
+      if (navigator.clipboard && navigator.clipboard.write) {
+        const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+        const textBlob = new Blob([tsv], { type: 'text/plain' });
+        
+        const clipboardItem = new ClipboardItem({
+          'text/html': htmlBlob,
+          'text/plain': textBlob
+        });
+        
+        navigator.clipboard.write([clipboardItem]).then(()=>{
+          $("status").textContent = '已复制到剪贴板（教练内容已加粗，可直接在 Excel 粘贴）';
         }).catch(()=>{
+          // 回退到纯文本复制
           ta.focus(); ta.select(); document.execCommand('copy');
-          $("status").textContent = '已复制（兼容模式）';
+          $("status").textContent = '已复制（兼容模式，教练内容可能未加粗）';
         });
       } else {
+        // 兼容旧浏览器
         ta.focus(); ta.select(); document.execCommand('copy');
-        $("status").textContent = '已复制（兼容模式）';
+        $("status").textContent = '已复制（兼容模式，教练内容可能未加粗）';
+      }
+    });
+
+    // —— 全屏预览功能 ——
+    $("fullscreenBtn").addEventListener('click', ()=>{
+      if (!lastRows.length) return;
+      
+      const fullscreenContent = $("fullscreenContent");
+      fullscreenContent.innerHTML = rowsToStyledHTML(lastRows);
+      
+      $("fullscreenModal").classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+
+    $("closeFullscreen").addEventListener('click', ()=>{
+      $("fullscreenModal").classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    });
+
+    // 点击模态框背景关闭
+    $("fullscreenModal").addEventListener('click', (e)=>{
+      if (e.target === $("fullscreenModal")) {
+        $("fullscreenModal").classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    });
+
+    // —— 更新说明功能 ——
+    $("updateBtn").addEventListener('click', ()=>{
+      $("updateModal").classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+
+    $("closeUpdate").addEventListener('click', ()=>{
+      $("updateModal").classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    });
+
+    // 点击模态框背景关闭
+    $("updateModal").addEventListener('click', (e)=>{
+      if (e.target === $("updateModal")) {
+        $("updateModal").classList.add('hidden');
+        document.body.style.overflow = 'auto';
       }
     });
 
